@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CrediNet - Dashboard</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="../css/style.css" rel="stylesheet"/>
+<link href="../css/components.css" rel="stylesheet"/>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h4><i class="fas fa-chart-line me-2"></i>CrediNet</h4>
+<div class="user-info">
+<div class="fw-bold" id="userName">Usuario</div>
+<small id="userRole">Cargando...</small>
+</div>
+<button class="logout-btn" id="logoutBtn">
+<i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+            </button>
+</div>
+<div class="sidebar-menu">
+<a class="menu-item active" href="#" onclick="showSection('dashboard')">
+<i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+<button class="menu-item" onclick="toggleSubmenu('parametrizaciones')">
+<i class="fas fa-cogs me-2"></i>Parametrizaciones
+                <i class="fas fa-chevron-down float-end"></i>
+</button>
+<div class="submenu d-none" id="submenu-parametrizaciones">
+<a class="submenu-item" href="#" onclick="showSection('scripts')">
+<i class="fas fa-file-alt me-2"></i>Scripts
+                </a>
+<a class="submenu-item" href="#" onclick="showSection('verificaciones')">
+<i class="fas fa-check-circle me-2"></i>Verificaciones
+                </a>
+<a class="submenu-item" href="#" onclick="showSection('productos')"><i class="fas fa-coins me-2"></i>Productos financieros</a></div>
+<a class="menu-item" href="#" onclick="showSection('reportes')">
+<i class="fas fa-chart-bar me-2"></i>Reportes
+            </a>
+<a class="menu-item" href="#" onclick="showSection('confirmaciones')">
+<i class="fas fa-phone me-2"></i>Confirmaciones
+            </a>
+<a class="menu-item" href="#" onclick="showSection('usuarios')">
+<i class="fas fa-users me-2"></i>Usuarios
+            </a>
+<a class="menu-item" href="#" onclick="showSection('productos-vigentes')">
+<i class="fas fa-check-circle me-2"></i>Productos financieros vigentes
+</a>
+</div>
+</div>
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+<div class="container-fluid">
+<button class="btn btn-toggle" onclick="toggleSidebar()">
+<i class="fas fa-bars"></i>
+</button>
+<span class="navbar-brand ms-3 mb-0 h1">Dashboard</span>
+<div class="ms-auto">
+<span class="text-muted">Bienvenido, <span id="navUserName">Usuario</span></span>
+</div>
+</div>
+</nav>
+<!-- Content Area -->
+<div class="content-area">
+<!-- Dashboard Section -->
+<div class="content-section" id="section-dashboard">
+<div class="row">
+<div class="col-12">
+<div class="card">
+<div class="card-header">
+<h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Panel de Control</h5>
+</div>
+<div class="card-body">
+<div class="row">
+<div class="col-md-3 mb-3">
+<div class="card bg-primary text-white">
+<div class="card-body">
+<h4 id="activeScriptsCount">0</h4>
+<p class="mb-0">Scripts Activos</p>
+</div>
+</div>
+</div>
+<div class="col-md-3 mb-3">
+<div class="card bg-success text-white">
+<div class="card-body">
+<h4 id="confirmationsToday">0</h4>
+<p class="mb-0">Confirmaciones Hoy</p>
+</div>
+</div>
+</div>
+<div class="col-md-3 mb-3">
+<div class="card bg-warning text-white">
+<div class="card-body">
+<h4 id="pendingVerifications">0</h4>
+<p class="mb-0">Verificaciones Pendientes</p>
+</div>
+</div>
+</div>
+<div class="col-md-3 mb-3">
+<div class="card bg-info text-white">
+<div class="card-body">
+<h4 id="activeUsers">0</h4>
+<p class="mb-0">Usuarios Activos</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Scripts Section -->
+<div class="content-section d-none" id="section-scripts">
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2><i class="fas fa-file-alt me-2"></i>Gestión de Scripts</h2>
+<button class="btn btn-primary" onclick="showCreateScriptModal()">
+<i class="fas fa-plus me-2"></i>Nuevo Script
+                    </button>
+</div>
+<!-- Scripts List -->
+<div class="row" id="scriptsList">
+<!-- Scripts will be loaded here -->
+</div>
+</div>
+<!-- Verifications Section -->
+<div class="content-section d-none" id="section-verificaciones">
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2><i class="fas fa-check-circle me-2"></i>Verificaciones de Campo</h2>
+<div>
+<button class="btn btn-outline-secondary me-2" onclick="filterVerifications('pending')">
+<i class="fas fa-clock me-1"></i>Pendientes
+                        </button>
+<button class="btn btn-outline-success me-2" onclick="filterVerifications('verified')">
+<i class="fas fa-check me-1"></i>Verificadas
+                        </button>
+<button class="btn btn-outline-danger" onclick="filterVerifications('rejected')">
+<i class="fas fa-times me-1"></i>Rechazadas
+                        </button>
+</div>
+</div>
+<div class="verification-mode" id="verificationsContainer">
+<!-- Verifications will be loaded here -->
+<div class="text-center py-5">
+<i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+<p>Cargando verificaciones...</p>
+</div>
+</div>
+</div>
+<!-- Confirmations Section -->
+<div class="content-section d-none" id="section-confirmaciones">
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2><i class="fas fa-phone me-2"></i>Confirmaciones Telefónicas</h2>
+<div>
+<!-- Botón de control de micrófono -->
+<button class="btn btn-danger me-2" id="micControlBtn" onclick="window.toggleMicrophone()">
+<i class="fas fa-microphone-slash me-2"></i>Micrófono: OFF
+                        </button>
+<!-- Botón para nueva confirmación -->
+<button class="btn btn-primary" onclick="window.startNewConfirmation()">
+<i class="fas fa-plus me-2"></i>Nueva Confirmación
+                        </button>
+</div>
+</div>
+<div class="card">
+<div class="card-header">
+<div class="d-flex justify-content-between align-items-center">
+<h5 class="mb-0">Registro de Confirmaciones</h5>
+<div class="input-group" style="width: 300px;">
+<input class="form-control" id="confirmationsSearch" placeholder="Buscar..." type="text"/>
+<button class="btn btn-outline-secondary" onclick="window.searchConfirmations()" type="button">
+<i class="fas fa-search"></i>
+</button>
+</div>
+</div>
+</div>
+<div class="card-body">
+<div class="table-responsive">
+<table class="table table-hover">
+<thead class="table-light">
+<tr>
+<th>ID</th>
+<th>Cliente</th>
+<th>Script</th>
+<th>Estado</th>
+<th>País</th>
+<th>Analista</th>
+<th>Fecha</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="confirmationsTable">
+<tr>
+<td class="text-center py-4" colspan="8">
+<div class="d-flex justify-content-center align-items-center">
+<div class="spinner-border text-primary me-3" role="status"></div>
+<span>Cargando confirmaciones...</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Paginación -->
+<nav aria-label="Page navigation">
+<ul class="pagination justify-content-center mt-3" id="confirmationsPagination">
+<li class="page-item disabled">
+<a class="page-link" href="#" tabindex="-1">Anterior</a>
+</li>
+<li class="page-item active"><a class="page-link" href="#">1</a></li>
+<li class="page-item"><a class="page-link" href="#">2</a></li>
+<li class="page-item"><a class="page-link" href="#">3</a></li>
+<li class="page-item">
+<a class="page-link" href="#">Siguiente</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title">Nueva Confirmación Telefónica</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<form id="confirmationForm">
+<div class="row mb-3">
+<div class="col-md-6">
+<label class="form-label">País</label>
+<select class="form-control" id="confirmationCountry" onchange="window.filterScriptsByCountry(this.value)" required="">
+<option value="">Seleccionar país</option>
+<option value="GT">Guatemala</option>
+<option value="SV">El Salvador</option>
+<option value="HN">Honduras</option>
+</select>
+</div>
+<div class="col-md-6">
+<label class="form-label">ID Cliente</label>
+<input class="form-control" id="clientId" required="" type="text"/>
+</div>
+</div>
+<div class="row mb-3">
+<div class="col-md-12">
+<label class="form-label">Script a utilizar</label>
+<select class="form-control" id="confirmationScript" required="">
+<option value="">Primero seleccione un país</option>
+</select>
+</div>
+</div>
+<div class="mb-3">
+<label class="form-label">Datos del Cliente</label>
+<div class="p-3 bg-light rounded" id="clientDataPreview">
+<p class="text-muted mb-0">Los datos del cliente aparecerán aquí al ingresar el ID</p>
+</div>
+</div>
+<div class="mb-3">
+<label class="form-label">Notas</label>
+<textarea class="form-control" id="confirmationNotes" rows="3"></textarea>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+<button class="btn btn-primary" onclick="window.startConfirmation()" type="button">
+<i class="fas fa-save me-2"></i>Guardar Confirmación
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Confirmation Details Modal -->
+<div class="modal fade" id="confirmationDetailsModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title">Detalles de Confirmación</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<div class="row mb-4">
+<div class="col-md-6">
+<h6><i class="fas fa-user me-2"></i><strong>Información del Cliente</strong></h6>
+<div class="ps-4 mt-2">
+<p><strong>ID:</strong> <span id="confirmationDetailClientId">-</span></p>
+<p><strong>Nombre:</strong> <span id="confirmationDetailClientName">-</span></p>
+</div>
+</div>
+<div class="col-md-6">
+<h6><i class="fas fa-file-alt me-2"></i><strong>Información del Script</strong></h6>
+<div class="ps-4 mt-2">
+<p><strong>Script:</strong> <span id="confirmationDetailScript">-</span></p>
+<p><strong>País:</strong> <span id="confirmationDetailCountry">-</span></p>
+</div>
+</div>
+</div>
+<div class="row mb-4">
+<div class="col-md-6">
+<h6><i class="fas fa-user-tie me-2"></i><strong>Información del Analista</strong></h6>
+<div class="ps-4 mt-2">
+<p><strong>Analista:</strong> <span id="confirmationDetailAnalyst">-</span></p>
+<p><strong>Fecha:</strong> <span id="confirmationDetailDate">-</span></p>
+</div>
+</div>
+<div class="col-md-6">
+<h6><i class="fas fa-info-circle me-2"></i><strong>Estado</strong></h6>
+<div class="ps-4 mt-2">
+<p><strong>Estado:</strong> <span class="badge" id="confirmationDetailStatus">-</span></p>
+<p><strong>Duración:</strong> <span id="confirmationDetailDuration">-</span></p>
+</div>
+</div>
+</div>
+<div class="mb-3">
+<h6><i class="fas fa-comment me-2"></i><strong>Notas</strong></h6>
+<div class="p-3 bg-light rounded mt-2" id="confirmationDetailNotes">
+                                    Sin notas registradas
+                                </div>
+</div>
+<div class="mb-3" id="answersSection">
+<h6><i class="fas fa-question-circle me-2"></i><strong>Respuestas</strong></h6>
+<div class="answers-container mt-2" id="confirmationAnswers">
+<!-- Las respuestas se cargarán aquí dinámicamente -->
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cerrar</button>
+<button class="btn btn-primary" onclick="window.printConfirmation()" type="button">
+<i class="fas fa-print me-2"></i>Imprimir
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Reports Section -->
+<div class="content-section d-none" id="section-reportes"><div class="alert alert-danger text-center mt-3 permiso-denegado" style="display: none;">Permiso denegado. Contáctate con el administrador.</div>
+<h2><i class="fas fa-chart-bar me-2"></i>Reportes</h2>
+<div class="card">
+<div class="card-body">
+<p>Sección en desarrollo. Próximamente podrás generar reportes detallados de confirmaciones y verificaciones.</p>
+</div>
+</div>
+</div>
+<!-- Users Section -->
+<div class="content-section d-none" id="section-usuarios"><div class="alert alert-danger text-center mt-3 permiso-denegado" style="display: none;">Permiso denegado. Contáctate con el administrador.</div>
+<h2><i class="fas fa-users me-2"></i>Usuarios</h2>
+<div class="card">
+<div class="card-body">
+<p>Sección en desarrollo. Próximamente podrás gestionar usuarios y permisos.</p>
+</div>
+</div>
+</div>
+<div class="content-section d-none" id="section-productos"><h2><i class="fas fa-coins me-2"></i>Productos Financieros</h2><div class="card"><div class="card-body">
+<form class="mb-4" id="productoForm">
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label">Campo</label>
+<select class="form-select" id="campo">
+<option value="">Seleccionar campo</option>
+<option value="edad">Edad</option>
+<option value="segmento">Segmento</option>
+<option value="maf">MAF</option>
+<option value="productoFisico">Producto físico</option>
+<option value="ingresos">Ingresos</option>
+<option value="estadoCivil">Estado Civil</option>
+<option value="marca">Marca</option>
+<option value="scoreBuro">Score de buró</option>
+</select>
+</div>
+<div class="col-md-3">
+<label class="form-label">Condición</label>
+<select class="form-select" id="operador">
+<option value="==">== Igual</option>
+<option value="!=">!= Diferente</option>
+<option value="&gt;">&gt; Mayor que</option>
+<option value="&lt;">&lt; Menor que</option>
+<option value="&gt;=">&gt;= Mayor o igual</option>
+<option value="&lt;=">&lt;= Menor o igual</option>
+<option value="entre">Entre</option>
+<option value="in">Contiene (in)</option>
+</select>
+</div>
+<div class="col-md-3">
+<label class="form-label">Valor</label>
+<input class="form-control" id="valor" placeholder="Ej: 25 o 20-30 o Micro,Cash" type="text"/>
+</div>
+<div class="col-md-2">
+<button class="btn btn-success w-100" id="agregarCondicion" type="button">
+<i class="fas fa-plus me-1"></i>Agregar
+      </button>
+</div>
+</div>
+</form>
+<div class="mt-3">
+<h6>Condiciones agregadas</h6>
+<ul class="list-group mb-3" id="listaCondiciones"></ul>
+<div class="mb-3">
+<label class="form-label">Resultado esperado</label>
+<input class="form-control" id="resultadoEsperado" required="" type="text"/>
+</div>
+<div class="d-flex justify-content-end">
+<button class="btn btn-primary" id="guardarProducto" type="button">
+<i class="fas fa-save me-2"></i>Guardar parametrización
+    </button>
+</div>
+</div>
+<hr/>
+<div class="mt-4">
+<h6>Productos registrados</h6>
+<div class="table-responsive">
+<table class="table table-bordered table-hover mt-2">
+<thead class="table-light">
+<tr>
+<th>Solicitud</th>
+<th>Edad</th>
+<th>Segmento</th>
+<th>MAF</th>
+<th>Producto</th>
+<th>Ingresos</th>
+<th>Estado Civil</th>
+<th>Marca</th>
+<th>Resultado</th></tr>
+</thead>
+<tbody id="productosTable">
+<tr><td class="text-center" colspan="9">No hay productos registrados</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div></div><div class="alert alert-info mt-4 d-none" id="resultadoEvaluacion">Aquí aparecerá el resultado de la evaluación del producto sugerido.</div></div>
+<div class="content-section d-none" id="section-productos-vigentes">
+<h2><i class="fas fa-check-circle me-2"></i>Productos Financieros Vigentes</h2>
+<div class="card">
+<div class="card-body">
+<form class="row g-3" id="evaluacionForm">
+<div class="col-md-3">
+<label class="form-label">Número de solicitud</label>
+<input class="form-control" id="solicitud" required="" type="text"/>
+</div>
+<div class="col-md-2"><label class="form-label">Edad</label><input class="form-control" id="edad" required="" type="number"/></div>
+<div class="col-md-3"><label class="form-label">Segmento</label>
+<select class="form-select" id="segmento" required="">
+<option value="">Seleccionar</option>
+<option value="Micro">Micro</option>
+<option value="Consumo">Consumo</option>
+</select>
+</div>
+<div class="col-md-3"><label class="form-label">MAF</label><input class="form-control" id="maf" required="" type="number"/></div>
+<div class="col-md-4"><label class="form-label">Producto físico</label>
+<select class="form-select" id="productoFisico" required="">
+<option value="">Seleccionar</option>
+<option value="Moto">Moto</option>
+<option value="Cash">Cash</option>
+<option value="Torito">Torito</option>
+<option value="Qute">Qute</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label">Ingresos</label><input class="form-control" id="ingresos" required="" type="number"/></div>
+<div class="col-md-4"><label class="form-label">Estado Civil</label>
+<select class="form-select" id="estadoCivil" required="">
+<option value="">Seleccionar</option>
+<option value="Casado">Casado</option>
+<option value="Soltero">Soltero</option>
+<option value="Unido">Unido</option>
+<option value="Viudo">Viudo</option>
+<option value="Divorciado">Divorciado</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label">Marca</label>
+<select class="form-select" id="marca" required="">
+<option value="">Seleccionar</option>
+<option value="Bajaj">Bajaj</option>
+<option value="KTM">KTM</option>
+<option value="Husqvarna">Husqvarna</option>
+</select>
+</div>
+<div class="col-md-4"><label class="form-label">Score de buró</label><input class="form-control" id="scoreBuro" required="" type="number"/></div>
+<div class="col-12 d-flex justify-content-end">
+<button class="btn btn-primary" type="submit"><i class="fas fa-search me-2"></i>Evaluar productos</button>
+</div>
+</form>
+<div class="mt-4">
+<h6>Productos sugeridos</h6>
+<ul class="list-group" id="resultadoProductos"></ul>
+</div>
+<div class="mt-5">
+<h6>Historial de evaluaciones</h6>
+<div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+<input class="form-control" id="fechaDesde" placeholder="Desde" style="max-width: 180px;" type="date"/>
+<input class="form-control" id="fechaHasta" placeholder="Hasta" style="max-width: 180px;" type="date"/>
+</div>
+<div class="mb-3 text-end">
+<input class="form-control w-25 ms-auto" id="busquedaSolicitud" placeholder="Buscar por número de solicitud" type="text"/>
+</div>
+<div class="table-responsive">
+<table class="table table-bordered table-hover text-center align-middle">
+<thead class="table-light">
+<tr>
+<th>Solicitud</th>
+<th>Analista</th>
+<th>Evaluado</th>
+<th>Productos sugeridos</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="historialEvaluaciones">
+<tr><td class="text-muted" colspan="5">Cargando historial...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Create/Edit Script Modal -->
+<div class="modal fade" id="scriptModal" tabindex="-1">
+<div class="modal-dialog modal-xl">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title" id="scriptModalTitle">Nuevo Script</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<form id="scriptForm">
+<div class="row">
+<div class="col-md-6">
+<div class="mb-3">
+<label class="form-label" for="scriptName">Nombre del Script</label>
+<input class="form-control" id="scriptName" required="" type="text"/>
+</div>
+</div>
+<div class="col-md-6">
+<div class="mb-3">
+<label class="form-label" for="scriptCountry">País</label>
+<select class="form-control" id="scriptCountry" required="">
+<option value="">Seleccionar país</option>
+<option value="GT">Guatemala</option>
+<option value="SV">El Salvador</option>
+<option value="HN">Honduras</option>
+</select>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-md-6">
+<div class="mb-3">
+<label class="form-label" for="scriptCategory">Categoría</label>
+<select class="form-control" id="scriptCategory" required="">
+<option value="confirmacion_datos_titular">Confirmación de Datos Titular</option>
+<option value="confirmacion_datos_laboral">Confirmación de Datos Laborales</option>
+<option value="confirmacion_datos_referencias_personales">Confirmación de Datos Referencias Personales</option>
+<option value="confirmacion_datos_referencias_familiares">Confirmación de Datos Referencias Familiares</option>
+<option value="Verificacion_datos_campo_domiciliar">Verificación de Campo Domiciliar</option>
+<option value="Verificacion_datos_campo_laboral">Verificación de Campo Laboral</option>
+<option value="Verificacion_datos_campo_comercial">Verificación de Campo Comercial</option>
+<option value="Verificacion_datos_campo_domiciliar_laboral">Verificación de Campo Domiciliar/Laboral</option>
+<option value="Verificacion_datos_campo_domiciliar_comercial">Verificación de Campo Domiciliar/Comercial</option>
+<option value="Verificacion_datos_campo_municipal">Verificación de Campo Municipal</option>
+</select>
+</div>
+</div>
+<div class="col-md-6">
+<div class="mb-3">
+<div class="form-check">
+<input class="form-check-input" id="randomOrder" type="checkbox"/>
+<label class="form-check-label" for="randomOrder">
+                                            Orden aleatorio de preguntas
+                                        </label>
+</div>
+<div class="form-check">
+<input checked="" class="form-check-input" id="scriptActive" type="checkbox"/>
+<label class="form-check-label" for="scriptActive">
+                                            Script activo
+                                        </label>
+</div>
+</div>
+</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="scriptDescription">Descripción</label>
+<textarea class="form-control" id="scriptDescription" rows="3"></textarea>
+</div>
+<hr/>
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h5>Flujo del Script (Basado en Respuestas)</h5>
+<button class="btn btn-outline-primary" onclick="toggleFlowView()" type="button">
+<i class="fas fa-project-diagram me-1"></i>Vista de Flujo
+                            </button>
+</div>
+<!-- Botón flotante NUEVO (añadirlo justo antes del cierre del modal-body) -->
+<button class="btn btn-success position-fixed bottom-0 end-0 m-4 rounded-pill shadow-lg px-4 py-2" onclick="addQuestion()" style="z-index: 1051;" type="button">
+<i class="fas fa-plus me-2"></i> Nueva Pregunta
+                        </button>
+<div class="flow-visualizer" id="flowVisualizer" style="display: none;">
+<div class="flow-controls">
+<button class="btn btn-sm btn-outline-secondary" onclick="zoomFlow(0.1)">
+<i class="fas fa-search-plus"></i>
+</button>
+<button class="btn btn-sm btn-outline-secondary" onclick="zoomFlow(-0.1)">
+<i class="fas fa-search-minus"></i>
+</button>
+<button class="btn btn-sm btn-outline-secondary" onclick="centerFlow()">
+<i class="fas fa-expand"></i>
+</button>
+</div>
+<!-- Flow nodes will be added here dynamically -->
+<div class="flow-toolbar">
+<button class="btn btn-sm btn-primary me-2" onclick="saveFlow()">
+<i class="fas fa-save me-1"></i>Guardar Flujo
+                                </button>
+<button class="btn btn-sm btn-outline-secondary" onclick="toggleFlowView()">
+<i class="fas fa-times me-1"></i>Salir
+                                </button>
+</div>
+</div>
+<div id="questionsList">
+<!-- Questions will be added here -->
+</div>
+<input id="scriptId" type="hidden"/>
+</form>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+<button class="btn btn-primary" onclick="saveScript()" type="button">Guardar Script</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title">Nueva Confirmación Telefónica</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<form id="confirmationForm">
+<div class="row mb-3">
+<div class="col-md-6">
+<label class="form-label">País</label>
+<select class="form-control" id="confirmationCountry" onchange="filterScriptsByCountry(this.value)" required="">
+<option value="">Seleccionar país</option>
+<option value="GT">Guatemala</option>
+<option value="SV">El Salvador</option>
+<option value="HN">Honduras</option>
+</select>
+</div>
+<div class="col-md-6">
+<label class="form-label">ID Cliente</label>
+<input class="form-control" id="clientId" required="" type="text"/>
+</div>
+</div>
+<div class="row mb-3">
+<div class="col-md-12">
+<label class="form-label">Script a utilizar</label>
+<select class="form-control" id="confirmationScript" required="">
+<option value="">Primero seleccione un país</option>
+</select>
+</div>
+</div>
+<div class="mb-3">
+<label class="form-label">Datos del Cliente</label>
+<div class="p-3 bg-light rounded" id="clientDataPreview">
+<p class="text-muted mb-0">Los datos del cliente aparecerán aquí al ingresar el ID</p>
+</div>
+</div>
+<div class="mb-3">
+<label class="form-label">Notas</label>
+<textarea class="form-control" id="confirmationNotes" rows="3"></textarea>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+<button class="btn btn-primary" onclick="startConfirmation()" type="button">Iniciar Confirmación</button>
+</div>
+</div>
+</div>
+</div>
+<div class="modal fade" id="callAnalysisModal" tabindex="-1">
+<div class="modal-dialog modal-fullscreen">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title">Análisis de Llamada en Tiempo Real</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body p-0">
+<div class="container-fluid h-100">
+<div class="row h-100">
+<!-- Sección de transcripción y preguntas (75% del ancho) -->
+<div class="col-lg-9 h-100 d-flex flex-column">
+<div class="card h-100">
+<div class="card-header d-flex justify-content-between align-items-center">
+<span>Transcripción y Script</span>
+<div class="call-timer">00:00:00</div>
+</div>
+<div class="card-body p-0 d-flex" style="height: calc(100% - 56px);">
+<!-- Transcripción (40% del espacio) -->
+<div class="transcription-box p-3" id="transcriptionContainer" style="width: 40%; overflow-y: auto; border-right: 1px solid #dee2e6;">
+<div class="transcription-content">
+<p class="text-muted">Iniciando transcripción...</p>
+</div>
+</div>
+<!-- Preguntas del script (60% del espacio) -->
+<div class="flex-grow-1 p-3" id="scriptQuestionsContainer" style="overflow-y: auto;">
+<!-- Preguntas se cargarán aquí -->
+</div>
+</div>
+</div>
+</div>
+<!-- Sección de métricas (25% del ancho) -->
+<div class="col-lg-3 h-100 d-flex flex-column">
+<!-- Tarjeta de métricas -->
+<div class="card mb-3 flex-grow-1">
+<div class="card-header">
+<i class="fas fa-chart-line me-2"></i>Métricas de Voz
+                                </div>
+<div class="card-body">
+<div class="voice-metric mb-3">
+<div class="metric-label">Tonalidad</div>
+<div class="progress mb-2" style="height: 10px;">
+<div class="progress-bar bg-success" id="toneProgress" style="width: 75%"></div>
+</div>
+<div class="metric-feedback small" id="toneFeedback">Normal</div>
+</div>
+<div class="voice-metric mb-3">
+<div class="metric-label">Dicción</div>
+<div class="progress mb-2" style="height: 10px;">
+<div class="progress-bar bg-info" id="dictionProgress" style="width: 85%"></div>
+</div>
+<div class="metric-feedback small" id="dictionFeedback">Buena</div>
+</div>
+<div class="voice-metric mb-3">
+<div class="metric-label">Velocidad</div>
+<div class="progress mb-2" style="height: 10px;">
+<div class="progress-bar bg-warning" id="speedProgress" style="width: 60%"></div>
+</div>
+<div class="metric-feedback small" id="speedFeedback">Rápida</div>
+</div>
+<div class="voice-metric mb-3">
+<div class="metric-label">Muletillas</div>
+<div class="badge bg-danger fs-6" id="fillerWordsCount">0</div>
+</div>
+<div class="voice-metric">
+<div class="metric-label">Palabra más repetida</div>
+<div class="badge bg-secondary fs-6" id="mostRepeatedWord">Ninguna</div>
+</div>
+</div>
+</div>
+<!-- Tarjeta de coaching -->
+<div class="card flex-grow-1">
+<div class="card-header">
+<i class="fas fa-lightbulb me-2"></i>Coaching Instantáneo
+                                </div>
+<div class="card-body" id="coachingTips" style="overflow-y: auto; height: 200px;">
+<!-- Consejos aparecerán aquí -->
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" id="stopCallBtn" onclick="stopCallAnalysis()">
+<i class="fas fa-stop me-2"></i>Finalizar Llamada
+                </button>
+<button class="btn btn-primary d-none" id="generateReportBtn" onclick="generateCallReport()">
+<i class="fas fa-file-alt me-2"></i>Generar Reporte
+                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal de Detalles de Confirmación -->
+<div class="modal fade" id="confirmationDetailsModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 class="modal-title">Detalles de Confirmación</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<div class="row mb-3">
+<div class="col-md-6">
+<strong>Cliente:</strong>
+<p id="confirmationDetailClient">Cargando...</p>
+</div>
+<div class="col-md-6">
+<strong>Script:</strong>
+<p id="confirmationDetailScript">Cargando...</p>
+</div>
+</div>
+<div class="row mb-3">
+<div class="col-md-4">
+<strong>Estado:</strong>
+<p id="confirmationDetailStatus">Cargando...</p>
+</div>
+<div class="col-md-4">
+<strong>Fecha:</strong>
+<p id="confirmationDetailDate">Cargando...</p>
+</div>
+</div>
+<div class="mb-3">
+<strong>Notas:</strong>
+<p id="confirmationDetailNotes">Cargando...</p>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cerrar</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Antes de tus scripts, carga Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<!-- Al final del body, asegura este orden -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="../js/firebaseConfig.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/dashboard.js"></script><script src="js/productos.js"></script> <!-- Este debe estar último -->
+</body>
+</html>

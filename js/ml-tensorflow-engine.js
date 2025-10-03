@@ -627,9 +627,9 @@ calculateFutureMove(futureData) {
         }
     }
 
-    async loadModelFromFirebase() {
+async loadModelFromFirebase() {
         try {
-            console.log(`📥 Cargando modelo ${this.instrument} desde Firebase...`);
+            console.log(`Cargando modelo ${this.instrument} desde Firebase...`);
             
             // Cargar metadata
             const doc = await firebase.firestore()
@@ -638,7 +638,7 @@ calculateFutureMove(futureData) {
                 .get();
 
             if (!doc.exists) {
-                console.log(`ℹ️ No hay modelo guardado para ${this.instrument}`);
+                console.log(`No hay modelo guardado para ${this.instrument}`);
                 return false;
             }
 
@@ -656,15 +656,23 @@ calculateFutureMove(futureData) {
             
             try {
                 this.model = await tf.loadLayersModel(loadPath);
-                console.log(`✅ Modelo ${this.instrument} cargado desde IndexedDB`);
+                
+                // COMPILAR EL MODELO después de cargarlo
+                this.model.compile({
+                    optimizer: tf.train.adam(0.001),
+                    loss: 'categoricalCrossentropy',
+                    metrics: ['accuracy']
+                });
+                
+                console.log(`Modelo ${this.instrument} cargado desde IndexedDB`);
                 return true;
             } catch (loadError) {
-                console.log('ℹ️ No se pudo cargar modelo de IndexedDB, se debe entrenar nuevo');
+                console.log('No se pudo cargar modelo de IndexedDB, se debe entrenar nuevo');
                 return false;
             }
 
         } catch (error) {
-            console.error(`❌ Error cargando modelo ${this.instrument}:`, error);
+            console.error(`Error cargando modelo ${this.instrument}:`, error);
             return false;
         }
     }
@@ -746,5 +754,6 @@ class FirebaseMLSync {
 
 window.ForexTensorFlowModel = ForexTensorFlowModel;
 window.FirebaseMLSync = FirebaseMLSync;
+
 
 console.log('✅ TensorFlow.js ML Engine cargado (versión corregida y optimizada)');

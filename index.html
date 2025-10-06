@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Forex Trading Platform - TensorFlow.js</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f5ff">
+    
+    <!-- TensorFlow.js - CRÍTICO -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <!-- Chart.js para gráficos del dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+    <!-- AGREGAR ESTA LÍNEA -->
+    <script src="js/signal-tracker.js"></script>
+    <script src="js/manual-signal-checker.js"></script> <!-- AGREGAR -->
+
+  
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b3d 100%);
+            color: #e1e8ef;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #00f5ff, #ff00f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #00ff88;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group h3 {
+            color: #00f5ff;
+            margin-bottom: 15px;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #e1e8ef;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00f5ff 0%, #ff00f5 100%);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 245, 255, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 600px;
+        }
+
+        .chart-title {
+            color: #00f5ff;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .candlestick-chart {
+            height: 600px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .candles-container {
+            display: flex;
+            align-items: end;
+            height: 100%;
+            padding: 20px 10px;
+            gap: 8px;
+            min-width: max-content;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-panel h3 {
+            color: #00f5ff;
+            margin-bottom: 15px;
+        }
+
+        .trading-signal {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .trading-signal:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .trading-signal.long { border-left-color: #00ff88; }
+        .trading-signal.short { border-left-color: #ff4757; }
+        .trading-signal.hold { border-left-color: #ffa726; }
+
+        .results-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00f5ff, #ff00f5);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .ml-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #94a3b8;
+        }
+
+        .confidence-high { color: #00ff88; }
+        .confidence-medium { color: #ffa726; }
+        .confidence-low { color: #ff4757; }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00f5ff, #ff00f5);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .price-up { color: #00ff88; }
+        .price-down { color: #ff4757; }
+
+        /* Learning Dashboard Styles */
+        .learning-dashboard-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .instrument-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .instrument-selector h2 {
+            color: #00f5ff;
+            margin-right: auto;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card.primary {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(255, 0, 245, 0.1));
+        }
+
+        .metric-trend {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .metric-trend.up { color: #00ff88; }
+        .metric-trend.down { color: #ff4757; }
+        .metric-trend.stable { color: #ffa726; }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container canvas {
+            max-height: 300px;
+        }
+
+        .confusion-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .confusion-matrix th,
+        .confusion-matrix td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .confusion-matrix .correct {
+            background: rgba(0, 255, 136, 0.2);
+            font-weight: bold;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(0, 245, 255, 0.3);
+            border-top-color: #00f5ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Multi-Instrument Progress Panel Styles */
+        .multi-progress-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header h3 {
+            color: #00f5ff;
+            font-size: 1.4em;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: rgba(0, 245, 255, 0.2);
+            border: 1px solid rgba(0, 245, 255, 0.4);
+            border-radius: 8px;
+            color: #00f5ff;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(0, 245, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .instruments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .instrument-progress-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .instrument-progress-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-pending {
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        .status-training {
+            border-color: rgba(0, 245, 255, 0.5);
+            background: rgba(0, 245, 255, 0.05);
+            animation: pulse-training 2s ease-in-out infinite;
+        }
+
+        .status-completed {
+            border-color: rgba(0, 255, 136, 0.5);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .status-error {
+            border-color: rgba(255, 71, 87, 0.5);
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        @keyframes pulse-training {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(0, 245, 255, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 20px 5px rgba(0, 245, 255, 0.2);
+            }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instrument-name {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #e1e8ef;
+        }
+
+        .status-icon {
+            font-size: 1.3em;
+            animation: rotate-icon 2s linear infinite;
+        }
+
+        .status-completed .status-icon {
+            color: #00ff88;
+            animation: none;
+        }
+
+        .status-error .status-icon {
+            color: #ff4757;
+            animation: none;
+        }
+
+        .status-pending .status-icon {
+            color: #94a3b8;
+            animation: none;
+        }
+
+        .status-training .status-icon {
+            color: #00f5ff;
+        }
+
+        @keyframes rotate-icon {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00f5ff, #00ff88);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .status-completed .progress-bar {
+            background: linear-gradient(90deg, #00ff88, #06b6d4);
+        }
+
+        .status-error .progress-bar {
+            background: linear-gradient(90deg, #ff4757, #ffa726);
+        }
+
+        .progress-text {
+            font-size: 0.75em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #e1e8ef;
+            font-weight: 600;
+        }
+
+        .accuracy-value {
+            color: #00ff88;
+        }
+
+        .status-message {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85em;
+            color: #94a3b8;
+            font-style: italic;
+            display: block;
+        }
+
+        .status-training .status-message {
+            color: #00f5ff;
+        }
+
+        .status-completed .status-message {
+            color: #00ff88;
+        }
+
+        .status-error .status-message {
+            color: #ff4757;
+        }
+
+        .panel-footer {
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #globalStats {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        #globalStats span {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #e1e8ef;
+        }
+
+        #completedCount {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        #trainingCount {
+            color: #00f5ff;
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        #pendingCount {
+            color: #94a3b8;
+            background: rgba(148, 163, 184, 0.1);
+        }
+
+        @media (max-width: 1200px) {
+            .instruments-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            .metric-card.primary {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .instruments-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .panel-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .refresh-btn {
+                width: 100%;
+            }
+            
+            #globalStats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #globalStats span {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ML Forex Platform - TensorFlow.js</h1>
+            <p class="subtitle">Sistema de Trading con Inteligencia Artificial Real</p>
+            <small id="tensorflowVersion" style="color: #94a3b8;"></small>
+        </div>
+
+        <!-- CONTROLES PRINCIPALES -->
+        <div class="controls">
+            <div class="control-group">
+                <h3>Instrumento</h3>
+                <select id="instrumentSelect">
+                    <optgroup label="Majors">
+                        <option value="EURUSD" selected>EUR/USD</option>
+                        <option value="GBPUSD">GBP/USD</option>
+                        <option value="USDJPY">USD/JPY</option>
+                        <option value="USDCHF">USD/CHF</option>
+                    </optgroup>
+                    <optgroup label="Crosses">
+                        <option value="EURJPY">EUR/JPY</option>
+                        <option value="GBPJPY">GBP/JPY</option>
+                        <option value="AUDJPY">AUD/JPY</option>
+                        <option value="EURGBP">EUR/GBP</option>
+                    </optgroup>
+                    <optgroup label="Exotics">
+                        <option value="USDZAR">USD/ZAR</option>
+                        <option value="USDTRY">USD/TRY</option>
+                        <option value="USDBRL">USD/BRL</option>
+                        <option value="USDMXN">USD/MXN</option>
+                    </optgroup>
+                    <optgroup label="Commodities">
+                        <option value="XAUUSD">Oro/USD</option>
+                        <option value="XAGUSD">Plata/USD</option>
+                    </optgroup>
+                </select>
+                <button onclick="loadRealData()">Cargar Datos Reales</button>
+            </div>
+                <div class="control-group">
+                    <h3>TensorFlow ML</h3>
+                    <button id="trainButton" onclick="trainModel()" disabled style="opacity: 0.5; cursor: not-allowed;">
+                        ⏳ Cargando sistema...
+                    </button>
+                    <button onclick="generatePrediction()">Predecir Movimiento</button>
+                </div>
+
+            <div class="control-group">
+                <h3>Trading Avanzado</h3>
+                <button onclick="generateAdvancedSignal()">Generar Señal</button>
+                <button onclick="testTwelveConnection()">Probar Conexión</button>
+            </div>
+
+            <div class="control-group">
+                <h3>Sistema</h3>
+                <button onclick="enableNotifications()">Activar Alertas</button>
+                <button onclick="testAlert()">Probar Alerta</button>
+            </div>
+
+            <!-- AGREGAR ESTE NUEVO BLOQUE: -->
+            <div class="control-group">
+                <h3>Tracking</h3>
+                <button onclick="showActiveSignals()">Ver Señales Activas</button>
+                <button onclick="showSignalHistory()">Ver Historial</button>
+                <button onclick="showPerformanceStats()">Actualizar Stats</button>
+                <button onclick="checkSignalsManually()" style="background: linear-gradient(135deg, #00ff88, #06b6d4);">
+                    🔄 Actualizar Señales
+                </button>               
+            </div>
+
+        </div>
+
+        <!-- ESTADO DE CONEXIÓN -->
+        <div class="controls">
+            <div class="control-group" style="background: rgba(0, 245, 255, 0.05);">
+                <h3>Estado del Sistema</h3>
+                <div id="dataStatus" style="padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; font-size: 0.9em;">
+                    <strong>Estado:</strong> <span id="statusText">Inicializando...</span><br>
+                    <strong>Fuente:</strong> <span id="sourceText">-</span><br>
+                    <strong>Velas:</strong> <span id="candleCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DE PROGRESO MULTI-INSTRUMENTO -->
+        <div id="multiProgressContainer"></div>
+
+        <!-- GRÁFICO Y SEÑALES -->
+        <div class="main-content">
+            <div class="chart-container">
+                <div class="chart-title" id="chartTitle">EUR/USD - Análisis en Tiempo Real</div>
+                <div class="candlestick-chart">
+                    <div class="candles-container" id="candlesContainer">
+                        <!-- Velas se generarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- SEÑALES DE TRADING -->
+                <div class="info-panel">
+                    <h3>Señales de Trading</h3>
+                    <div id="tradingSignals">
+                        <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                            <p>No hay señales activas</p>
+                            <small>Genera una señal para empezar</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREDICCIONES IA -->
+                <div class="info-panel">
+                    <h3>Predicción TensorFlow</h3>
+                    <div id="mlPredictions">
+                        <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>Dirección</span>
+                            <span class="confidence-medium" id="direction">-</span>
+                        </div>
+                        <div style="padding: 10px;">
+                            <span>Confianza</span>
+                            <span class="confidence-medium" id="probability">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MÉTRICAS -->
+        <div class="results-section">
+            <div class="results-tabs">
+                <button class="tab active" onclick="switchTab('ml-analysis')">Análisis IA</button>
+                <button class="tab" onclick="switchTab('learning-dashboard')">Dashboard Aprendizaje</button>
+                <button class="tab" onclick="switchTab('performance')">Performance</button>
+            </div>
+
+            <div id="ml-analysis" class="tab-content active">
+                <div class="ml-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value confidence-high" id="accuracyMetric">-</div>
+                        <div class="metric-label">Accuracy TensorFlow</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value confidence-high" id="pipsMetric">-</div>
+                        <div class="metric-label">Pips Ganados</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="signalsMetric">-</div>
+                        <div class="metric-label">Señales Generadas</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value confidence-high" id="winrateMetric">-</div>
+                        <div class="metric-label">Win Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="learning-dashboard" class="tab-content">
+                <div id="learningDashboardContainer">
+                    <!-- Dashboard se renderizará aquí -->
+                </div>
+            </div>
+
+            <div id="performance" class="tab-content">
+                <div class="ml-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="performanceWinRate">-</div>
+                        <div class="metric-label">Win Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="performanceRR">-</div>
+                        <div class="metric-label">R/R Ratio</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value confidence-high" id="performanceTrades">-</div>
+                        <div class="metric-label">Total Operaciones</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value confidence-high" id="performanceProfit">-</div>
+                        <div class="metric-label">Profit Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div id="notificationContent"></div>
+    </div>
+
+    <!-- SCRIPTS - ORDEN IMPORTANTE -->
+    <script src="js/twelve-data-real.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/pattern-recognition.js"></script>
+    <script src="js/trading-system.js"></script>
+    <script src="js/ml-tensorflow-engine.js"></script>
+    <script src="js/auto-training-system.js"></script>
+    <script src="js/learning-dashboard.js"></script>
+    <script src="js/multi-instrument-progress.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // Mostrar versión de TensorFlow
+        if (typeof tf !== 'undefined') {
+            document.getElementById('tensorflowVersion').textContent = 
+                `TensorFlow.js v${tf.version.tfjs} | Backend: ${tf.getBackend()}`;
+            console.log('TensorFlow.js cargado correctamente');
+        } else {
+            document.getElementById('tensorflowVersion').textContent = 
+                'TensorFlow.js NO cargado';
+            console.error('TensorFlow.js no está disponible');
+        }
+
+        // Inicializar panel de progreso multi-instrumento
+        if (window.multiProgress) {
+            multiProgress.initialize('multiProgressContainer');
+            console.log('Panel de progreso multi-instrumento inicializado');
+        }
+    </script>
+</body>
+</html>

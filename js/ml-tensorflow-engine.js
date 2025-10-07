@@ -164,11 +164,7 @@ class ForexTensorFlowModel {
                 }
             };
 
-            const earlyStopping = tf.callbacks.earlyStopping({
-                monitor: 'val_loss',
-                patience: 5,  // Detener si no mejora en 5 epochs
-                restoreBestWeights: true
-            });
+
 
             const history = await this.model.fit(xTrain, yTrain, {
                 epochs: epochs,

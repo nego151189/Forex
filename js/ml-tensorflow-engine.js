@@ -5,7 +5,7 @@ class ForexTensorFlowModel {
         this.model = null;
         this.isTraining = false;
         this.trainingHistory = [];
-        this.sequenceLength = 60;
+        this.sequenceLength = 40;
         this.features = ['open', 'high', 'low', 'close', 'volume', 'rsi', 'macd', 'atr', 'momentum'];
         this.scaler = { mean: null, std: null };
         this.accuracy = 0;
@@ -163,6 +163,12 @@ class ForexTensorFlowModel {
                     console.log('Entrenamiento completado');
                 }
             };
+
+            const earlyStopping = tf.callbacks.earlyStopping({
+                monitor: 'val_loss',
+                patience: 5,  // Detener si no mejora en 5 epochs
+                restoreBestWeights: true
+            });
 
             const history = await this.model.fit(xTrain, yTrain, {
                 epochs: epochs,
@@ -323,10 +329,10 @@ class ForexTensorFlowModel {
         const sequences = [];
         const labels = [];
 
-        for (let i = this.sequenceLength; i < allFeatures.length - 10; i++) {
+        for (let i = this.sequenceLength; i < allFeatures.length - 20; i++) {
             const sequence = allFeatures.slice(i - this.sequenceLength, i);
             
-            const futureSlice = enrichedData.slice(i, i + 10);
+            const futureSlice = enrichedData.slice(i, i + 20);
             const futureMove = this.calculateFutureMove(futureSlice);
             const label = this.moveToOneHot(futureMove);
             
@@ -408,43 +414,43 @@ class ForexTensorFlowModel {
         return counts;
     }
 
-    calculateFutureMove(futureData) {
-        const startPrice = futureData[0].close;
-        const maxPrice = Math.max(...futureData.map(d => d.high));
-        const minPrice = Math.min(...futureData.map(d => d.low));
-        const endPrice = futureData[futureData.length - 1].close;
+calculateFutureMove(futureData) {
+    const startPrice = futureData[0].close;
+    const maxPrice = Math.max(...futureData.map(d => d.high));
+    const minPrice = Math.min(...futureData.map(d => d.low));
+    const endPrice = futureData[futureData.length - 1].close;
 
-        const upMove = (maxPrice - startPrice) / startPrice;
-        const downMove = (startPrice - minPrice) / startPrice;
-        const netMove = (endPrice - startPrice) / startPrice;
+    const upMove = (maxPrice - startPrice) / startPrice;
+    const downMove = (startPrice - minPrice) / startPrice;
+    const netMove = (endPrice - startPrice) / startPrice;
 
-        let buyThreshold, sellThreshold;
-        
-        if (this.instrument === 'XAUUSD') {
-            buyThreshold = 0.0015;
-            sellThreshold = 0.0015;
-        } else if (this.instrument === 'EURGBP') {
-            buyThreshold = 0.0003;
-            sellThreshold = 0.0003;
-        } else if (this.instrument.includes('JPY')) {
-            buyThreshold = 0.0012;
-            sellThreshold = 0.0012;
-        } else if (['USDZAR', 'USDTRY', 'USDBRL', 'USDMXN'].includes(this.instrument)) {
-            buyThreshold = 0.002;
-            sellThreshold = 0.002;
-        } else {
-            buyThreshold = 0.0005;
-            sellThreshold = 0.0005;
-        }
-
-        if (upMove > buyThreshold && netMove > buyThreshold * 0.5) {
-            return 'BUY';
-        } else if (downMove > sellThreshold && netMove < -sellThreshold * 0.5) {
-            return 'SELL';
-        } else {
-            return 'HOLD';
-        }
+    // UMBRALES CORREGIDOS - Más realistas
+    let buyThreshold, sellThreshold;
+    
+    if (this.instrument === 'XAUUSD') {
+        buyThreshold = 0.003;   // 0.3% para oro
+        sellThreshold = 0.003;
+    } else if (this.instrument === 'EURGBP') {
+        buyThreshold = 0.0008;  // 0.08%
+        sellThreshold = 0.0008;
+    } else if (this.instrument.includes('JPY')) {
+        buyThreshold = 0.002;   // 0.2%
+        sellThreshold = 0.002;
+    } else {
+        // Para EURUSD y otros majors
+        buyThreshold = 0.0015;  // 0.15% - MÁS REALISTA
+        sellThreshold = 0.0015;
     }
+
+    // Criterio más estricto: necesita AMBOS movimiento hacia arriba Y cierre positivo
+    if (upMove > buyThreshold && netMove > buyThreshold * 0.6) {
+        return 'BUY';
+    } else if (downMove > sellThreshold && netMove < -sellThreshold * 0.6) {
+        return 'SELL';
+    } else {
+        return 'HOLD';
+    }
+}
 
     moveToOneHot(move) {
         if (move === 'BUY') return [1, 0, 0];

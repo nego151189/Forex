@@ -18,7 +18,7 @@ class ForexTensorFlowModel {
         const model = tf.sequential({
             layers: [
                 tf.layers.lstm({
-                    units: 128,
+                    units: 64,
                     returnSequences: true,
                     inputShape: [this.sequenceLength, this.features.length],
                     dropout: 0.2,
@@ -30,7 +30,7 @@ class ForexTensorFlowModel {
                 tf.layers.batchNormalization(),
                 
                 tf.layers.lstm({
-                    units: 64,
+                    units: 32,
                     returnSequences: false,
                     dropout: 0.2,
                     recurrentDropout: 0.2,
@@ -714,3 +714,4 @@ window.ForexTensorFlowModel = ForexTensorFlowModel;
 window.FirebaseMLSync = FirebaseMLSync;
 
 console.log('TensorFlow.js ML Engine cargado (version corregida y optimizada)');
+

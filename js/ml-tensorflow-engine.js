@@ -434,8 +434,8 @@ calculateFutureMove(futureData) {
         sellThreshold = 0.002;
     } else {
         // Para EURUSD y otros majors
-        buyThreshold = 0.0015;  // 0.15% - MÁS REALISTA
-        sellThreshold = 0.0015;
+        buyThreshold = 0.0025;  // 0.25% - MÁS REALISTA
+        sellThreshold = 0.0025;
     }
 
     // Criterio más estricto: necesita AMBOS movimiento hacia arriba Y cierre positivo

@@ -211,7 +211,7 @@ async init() {
             console.log(`📊 Datos disponibles: ${this.currentData.length} velas`);
             
             // Entrenar con datos reales
-            const result = await this.mlModel.trainOnRealData(this.currentData, 30);
+            const result = await this.mlModel.trainOnRealData(this.currentData, 50);
             
             const duration = ((Date.now() - startTime) / 1000).toFixed(1);
             
